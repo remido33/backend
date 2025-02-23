@@ -5,11 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run start:dashboard & npm run start:api",
-    "start:dashboard": "node servers_init/dashboard.js",
-    "start:api": "node servers_init/api.js",
-    "dev:dashboard": "nodemon servers_init/dashboard.js",
-    "dev:api": "nodemon servers_init/api.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
