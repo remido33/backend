@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'No build step required'",
     "start": "npm run start:dashboard & npm run start:api",
     "start:dashboard": "node servers_init/dashboard.js",
     "start:api": "node servers_init/api.js",
