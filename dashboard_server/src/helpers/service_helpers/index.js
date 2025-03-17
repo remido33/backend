@@ -288,7 +288,7 @@ const setElastic = async ({ storeId, apiKey, storeName, }) => {
                             strings_as_keyword: {
                                 match_mapping_type: "string",
                                 mapping: {
-                                    type: "text"
+                                    type: "keyword"
                                 }
                             }
                         }

@@ -132,14 +132,15 @@ const verifyUserService = async ({ id, token }) => {
         const initialStoreId = storeIds[0];
 
         const result = await executeQuery(
-            'SELECT account_name FROM stores WHERE id = $1', 
+            'SELECT account_name, store_name FROM stores WHERE id = $1', 
             [initialStoreId]
         );
 
 
         const initialStore = {
             id: initialStoreId,
-            name: result.rows[0].account_name,
+            accountName: result.rows[0].account_name,
+            storeName: result.rows[0].store_name,
         };
 
         const payload = {

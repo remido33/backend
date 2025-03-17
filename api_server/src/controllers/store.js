@@ -143,7 +143,6 @@ const getRecommendationController = tryCatch(async (req, res) => {
 const createNotificationTokenController =  tryCatch(async (req, res) => {
     const { storeId } = req.params;
     const { token, platformId } = req.body;
-    console.log(storeId, token, platformId);
     await executeQuery(
         'INSERT INTO notifications (store_id, platform_id, token) VALUES ($1, $2, $3)',
         [storeId, platformId, token]

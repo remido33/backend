@@ -151,14 +151,11 @@ const getChartAnalyticsService = async ({ storeId, startDate, endDate }) => {
           return buckets[bucketKey];
         }
       });
-  
-      // (Optional) Ensure that every bucket's actions object always contains certain expected keys.
-      // Define an array of expected actions (adjust as needed).
       const expectedActions = ['view', 'atc'];
       results = results.map(bucket => {
         expectedActions.forEach(actionName => {
           if (!bucket.actions[actionName]) {
-            bucket.actions[actionName] = {}; // Add empty object for consistency.
+            bucket.actions[actionName] = {};
           }
         });
         return bucket;
