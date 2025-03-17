@@ -8,7 +8,6 @@ const {
 } = require('../controllers/analytics');
 
 
-const platforms = [1, 2];
 const actions = [1, 2];
 
 router.post(
@@ -27,7 +26,7 @@ router.post(
         {
             key: 'body', 
             value: 'platformId',
-            validate: (platformId) => platforms.find((i) => i === platformId),
+            validate: (pl) => pl === 1 || pl === 2
         },
     ]), 
     createActionAnalyticController,
@@ -44,7 +43,7 @@ router.post(
         {
             key: 'body', 
             value: 'platformId',
-            validate: (platformId) => platforms.find((i) => i === platformId),
+            validate: (pl) => pl === 1 || pl === 2
         },
     ]), 
     createTermAnalyticController,
@@ -65,7 +64,7 @@ router.post(
         {
             key: 'body', 
             value: 'platformId',
-            validate: (platformId) => platforms.find((i) => i === platformId),
+            validate: (pl) => pl === 1 || pl === 2
         },
         {
             key: 'body',

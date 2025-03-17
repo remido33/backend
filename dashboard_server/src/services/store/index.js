@@ -2,11 +2,10 @@ const pool = require('../../helpers/db');
 const getError = require('../../../../shared_utils/getError');
 const elastic = require('../../../../shared_utils/elastic');
 const executeQueryWithoutPool = require('../../helpers/executeQueryWithoutPool');
-const executeQuery = require('../../helpers/executeQuery');
+const executeQuery = require('../../../../shared_utils/executeQuery');
 const { deleteCollectionSets, saveCollections } = require('../../helpers/service_helpers/collectionsHelpers'); 
 const { 
     checkStoreExistsById, 
-    updateStoreApiKey, 
     updateStoreFilters, 
     updateStoreCollections, 
     setElastic,
@@ -25,14 +24,6 @@ const {
 } = require('../../../../shared_utils/encrypt');
 
 const createStoreService = async ({ storeName, accountName, planId, apiKey, accessToken }) => {
-
-    await setElastic({ 
-        storeId: 59, 
-        apiKey, 
-        storeName 
-    });
-    return [];
-
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -46,13 +37,21 @@ const createStoreService = async ({ storeName, accountName, planId, apiKey, acce
         const storeId = result.rows[0].id;
 
 
-        await setRedisHash(`store:${storeId}`, { 
+        await setRedisHash(`store:${storeId}`, {
+            loading_filters: 'false',
+            loading_collections: 'false',
             apiKey: encryptedApiKey,
             accessToken: encryptedAccessToken,
             storeName: storeName,
             accountName: accountName,
             filters: '[]',
             collections: '[]',
+        });
+
+        await setElastic({ 
+            storeId,
+            apiKey, 
+            storeName 
         });
 
         
@@ -69,48 +68,73 @@ const createStoreService = async ({ storeName, accountName, planId, apiKey, acce
 };
 
 const getStoreService = async ({ id }) => {
-    const { filters, collections, } = await getRedisHash(`store:${id}`, ['filters', 'collections']);
+    const { 
+        loading_filters, 
+        loading_collections, 
+        filters, 
+        collections 
+    } = await getRedisHash(
+        `store:${id}`, 
+        ['loading_filters', 'loading_collections', 'filters', 'collections']
+    );
 
-    const response = {
+    return {
+        loading: {
+            filters: loading_filters === 'true',
+            collections: loading_collections === 'true',
+        },
         filters: JSON.parse(filters),
         collections: JSON.parse(collections),
     };
-
-    return response;
 };
 
 const updateStoreService = async ({ id, updates }) => {
+    const updatingKeys = updates.map(({ key }) => key);
 
-    for (const { key, value } of updates) {
-        switch (key) {
-            case 'apiKey':
-                await updateStoreApiKey({ id, apiKey: value });
-                return { message: `Api key updated for ${id}`}
+    const existingLoadingKeys = await getRedisHash(
+        `store:${id}`, 
+        updatingKeys.map(key => `loading_${key}`)
+    );
 
-            case 'filters':
-                const updatedFilters = await updateStoreFilters({ 
-                    id, 
-                    filters: value,
-                });
+    const isAlreadyUpdating = Object.values(existingLoadingKeys).some(value => value === 'true');
 
-                return { 
-                    filters: updatedFilters,
-                };
-            
-            case 'collections':
+    if (isAlreadyUpdating) {
+        throw getError(409, 'Another update is already in progress.');
+    }
 
-                const updatedCollections = await updateStoreCollections({ 
-                    id, 
-                    collections: value,
-                });
+    await updateRedisHash(
+        `store:${id}`, 
+        updatingKeys.map(key => ({ key: `loading_${key}`, value: 'true' }))
+    );
 
-                return { 
-                    collections: updatedCollections,
-                };
+    try {
+        let result;
 
-            default:
-                throw getError(500, `Unhandled key: ${key}`);
+        for (const { key, value } of updates) {
+            switch (key) {
+                case 'filters':
+                    result = { filters: await updateStoreFilters({ id, filters: value }) };
+                    break;
+
+                case 'collections':
+                    result = { collections: await updateStoreCollections({ id, collections: value }) };
+                    break;
+
+                default:
+                    throw getError(500, `Unhandled key: ${key}`);
+            }
         }
+
+        return result;
+    } catch (err) {
+        throw err;
+    } finally {
+
+        await updateRedisHash(
+            `store:${id}`, 
+            updatingKeys.map(key => ({ key: `loading_${key}`, value: 'false' }))
+        );
+
     }
 };
 

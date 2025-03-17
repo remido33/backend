@@ -343,8 +343,75 @@ const getOrdersTableAnalyticsService = async ({
     }
 };
 
+const getTermsTableAnalyticsService = async ({
+  storeId,
+  startDate,
+  endDate,
+  sortKey = 'total',
+  sortType = 'desc',
+  limit = 10,
+  page = 1
+}) => {
+  const client = await pool.connect();
+  const offset = (page - 1) * limit;
+  let totalCount = null;
+
+  try {
+      await checkStoreExistsById(client, storeId);
+
+      const query = `
+          WITH terms_data AS (
+              SELECT 
+                  COALESCE(NULLIF(t.term, ''), '(empty)') AS term, -- Convert empty strings to '(empty)'
+                  COUNT(*) AS total, -- Total occurrences of the term
+                  COUNT(*) FILTER (WHERE t.platform_id = 1) AS ios,
+                  COUNT(*) FILTER (WHERE t.platform_id = 2) AS android
+                  ${page === 1 ? ', COUNT(*) OVER() AS total_count' : ''}
+              FROM terms t
+              WHERE t.store_id = $1 
+              AND t.timestamp BETWEEN $2 AND $3
+              GROUP BY COALESCE(NULLIF(t.term, ''), '(empty)') -- Group only by term
+          )
+          SELECT *, 
+              ${page === 1 ? 'total_count' : 'NULL AS total_count'}
+          FROM terms_data
+          ORDER BY 
+              ${sortKey} ${sortType}
+          LIMIT $4 OFFSET $5
+      `;
+
+      const result = await executeQueryWithoutPool({
+          client,
+          query,
+          params: [storeId, startDate, endDate, limit, offset],
+      });
+
+      if (page === 1 && result.rows.length > 0) {
+          totalCount = parseInt(result.rows[0].total_count, 10); // Ensure totalCount is an integer
+      }
+
+      const hasMore = totalCount !== null ? (page * limit) < totalCount : result.rows.length === limit;
+
+      return { 
+          data: result.rows.map(row => ({
+              term: row.term,
+              ios: parseInt(row.ios),
+              android: parseInt(row.android),
+              total: parseInt(row.total),
+          })), 
+          totalCount,
+          hasMore
+      };
+  } catch (error) {
+      throw error;
+  } finally {
+      client.release();
+  }
+};
+
 module.exports = {
     getChartAnalyticsService,
     getProductsTableAnalyticsService,
     getOrdersTableAnalyticsService,
+    getTermsTableAnalyticsService,
 }

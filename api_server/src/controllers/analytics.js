@@ -35,7 +35,7 @@ const createTermAnalyticController = tryCatch(async (req, res) => {
 const createPurchaseAnalyticController = tryCatch(async (req, res) => {
     const { storeId, } = req.params;
     const { platformId, products, total, } = req.body;
-    
+
     await createPurchaseAnalyticService({ 
         storeId, 
         products, 

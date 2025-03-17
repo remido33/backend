@@ -1,5 +1,5 @@
 const executeQueryWithoutPool = require('../helpers/executeQueryWithoutPool');
-const executeQuery = require('../helpers/executeQuery');
+const executeQuery = require('../../../shared_utils/executeQuery');
 const getError = require('../../../shared_utils/getError');
 const pool = require('../helpers/db');
 const oneWayHash = require('../helpers/oneWayHash');

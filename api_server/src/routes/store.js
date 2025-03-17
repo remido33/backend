@@ -8,8 +8,10 @@ const {
     getSearchResultsController,
     getRecommendationController,
     getSuggestionsController,
+    createNotificationTokenController,
 } = require("../controllers/store");
 const { isStringOfNumbersSeparatedByComma } = require('../../../shared_utils/validators');
+const { validate } = require('node-cron');
 
 router.get(
     '/:storeId/search',
@@ -127,5 +129,22 @@ router.get(
     ]),
     getCollectionProductsController,
 );
+
+router.post(
+    '/:storeId/notification',
+    validateParams([
+        { 
+            key: 'body', 
+            value: 'token', 
+            type: 'string',
+        },
+        {
+            key: 'body',
+            value: 'platformId',
+            validate: (pl) => pl === 1 || pl === 2
+        },
+    ]),
+    createNotificationTokenController
+)
 
 module.exports = router;

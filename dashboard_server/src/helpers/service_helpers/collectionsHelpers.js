@@ -127,7 +127,6 @@ const saveCollections = async ({ pushCollections, storeId, storeName, apiKey }) 
     }
 };
 
-
 const getProductCollections = async ({ indexName, productId }) => {
     try {
         const product = await elastic.get({
@@ -141,7 +140,6 @@ const getProductCollections = async ({ indexName, productId }) => {
         return [];
     }
 };
-
 
 const buildUpdatedCollections = (collections) => {
     return collections

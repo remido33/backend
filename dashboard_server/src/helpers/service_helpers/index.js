@@ -56,26 +56,6 @@ const checkStoresExist = async (client, storeIds) => {
     return existingStoreIds;
 };
 
-const updateStoreApiKey = async ({ id, apiKey }) => {
-    const client = await pool.connect();
-    try {
-        const encryptedApiKey = encrypt(apiKey);
-        await client.query('BEGIN');
-        await executeQueryWithoutPool({
-            client,
-            query: 'UPDATE stores SET api_key = $1 WHERE id = $2',
-            params: [encryptedApiKey, id],
-        });
-        await updateRedisHash(`store:${id}`, [{ key: 'apiKey', value: encryptedApiKey }]);
-        await client.query('COMMIT');
-    } catch (err) {
-        await client.query('ROLLBACK');
-        throw err;
-    } finally {
-        client.release();
-    }
-};
-
 const updateStoreFilters = async ({ id, filters }) => {
 
     if (!Array.isArray(filters)) {
@@ -135,8 +115,8 @@ const updateStoreCollections = async ({ id: storeId, collections }) => {
         const { apiKey, storeName, collections: currentCollections } = await getRedisHash(
             `store:${storeId}`, 
             ['apiKey', 'storeName', 'collections']
-        );
-        
+        )
+
         const decryptedApiKey = decrypt(apiKey);
         
         const collectionsToSet = collections.flatMap(collection => [
@@ -178,7 +158,7 @@ const updateStoreCollections = async ({ id: storeId, collections }) => {
             params: [jsonCollections, storeId],
         });
 
-        await updateRedisHash(`store:${storeId}`, [{ key: 'collections', value: jsonCollections }]);
+        await updateRedisHash(`store:${storeId}`, [{ key: 'collections', value: jsonCollections },]);
         await client.query('COMMIT');
 
         return updatedCollections;
@@ -203,7 +183,8 @@ const updateStoreCollections = async ({ id: storeId, collections }) => {
 const parseProduct = (product) => {
     const { 
         id, 
-        title, 
+        title,
+        body_html: description, 
         vendor, 
         product_type,
         created_at, 
@@ -257,6 +238,7 @@ const parseProduct = (product) => {
     return { 
         id, 
         title,
+        description,
         vendor,
         type: normalizeProductType(product_type),
         createdAt: created_at,
@@ -306,7 +288,7 @@ const setElastic = async ({ storeId, apiKey, storeName, }) => {
                             strings_as_keyword: {
                                 match_mapping_type: "string",
                                 mapping: {
-                                    type: "keyword"
+                                    type: "text"
                                 }
                             }
                         }
@@ -314,8 +296,9 @@ const setElastic = async ({ storeId, apiKey, storeName, }) => {
                     properties: {
                         id: { type: 'keyword' },
                         title: { type: 'text' },
+                        description: { type: 'text' },
                         vendor: { type: 'keyword' },
-                        type: { type: 'keyword' },  // Added product_type field
+                        type: { type: 'keyword' },
                         createdAt: { type: 'date' },
                         updatedAt: { type: 'date' },
                         minPrice: { type: 'scaled_float', scaling_factor: 100 },
@@ -346,56 +329,6 @@ const setElastic = async ({ storeId, apiKey, storeName, }) => {
             }
         });
 
-        
-        {/* 
-         await elastic.indices.create({
-            index: indexName,
-            body: {
-                mappings: {
-                    dynamic_templates: [
-                        {
-                            strings_as_keyword: {
-                                match_mapping_type: "string",
-                                mapping: {
-                                    type: "keyword"
-                                }
-                            }
-                        }
-                    ],
-                    properties: {
-                        id: { type: 'keyword' },
-                        title: { type: 'text' },
-                        vendor: { type: 'keyword' },
-                        created_at: { type: 'date' },
-                        updated_at: { type: 'date' },
-                        tags: { type: 'text' },
-                        status: { type: 'keyword' },
-                        available: { type: 'boolean' },
-                        price: { type: 'keyword' },
-                        mainImage: { type: 'keyword' },
-                        images: { type: 'keyword' },
-                        collections: { type: 'keyword' },
-                        variants: {
-                            type: 'nested',
-                            properties: {
-                                id: { type: 'keyword' },
-                                title: { type: 'text' },
-                                price: { type: 'keyword' },
-                                compare_at_price: { type: 'keyword' },
-                                quantity: { type: 'integer' },
-                                image: { type: 'keyword' },
-                                options: { 
-                                    type: 'object',
-                                    dynamic: true 
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        */}
         for (const product of parsedProducts) {
             await elastic.index({
                 index: indexName,
@@ -461,7 +394,6 @@ module.exports = {
     checkStoresExist,
     updateStoreFilters,
     updateStoreCollections,
-    updateStoreApiKey,
     setElastic,
     parseProduct,
     fetchAllProducts,

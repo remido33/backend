@@ -1,3 +1,4 @@
+const executeQuery = require("../../../shared_utils/executeQuery");
 const getError = require("../../../shared_utils/getError");
 const tryCatch = require("../../../shared_utils/tryCatch");
 const { 
@@ -107,13 +108,15 @@ const getSearchResultsController = tryCatch(async (req, res) => {
 
 const getSuggestionsController = tryCatch(async (req, res) => {
     const { storeId, } = req.params;
-    const { query, limit, } = req.query;
+    const { query, limit, exclude, } = req.query;
 
+    const excludeTypes = exclude?.split(',');
+    
     const response = await getSuggestionsService({
         storeId, 
         query,
         limit,
-        excludeTypes: ['men']
+        excludeTypes,
     });
 
     res.status(200).json(response);
@@ -137,6 +140,17 @@ const getRecommendationController = tryCatch(async (req, res) => {
     res.status(200).json(response);
 });
 
+const createNotificationTokenController =  tryCatch(async (req, res) => {
+    const { storeId } = req.params;
+    const { token, platformId } = req.body;
+    console.log(storeId, token, platformId);
+    await executeQuery(
+        'INSERT INTO notifications (store_id, platform_id, token) VALUES ($1, $2, $3)',
+        [storeId, platformId, token]
+    );
+    res.status(204).end();
+});
+
 module.exports = {
     getProductController,
     getMultipleProductsController,
@@ -145,4 +159,5 @@ module.exports = {
     getCollectionProductsController,
     getRecommendationController,
     createCheckoutController,
+    createNotificationTokenController,
 };

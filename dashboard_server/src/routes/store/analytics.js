@@ -1,8 +1,7 @@
 const router = require('express').Router({ mergeParams: true });
-const { validate } = require('node-cron');
 const validateParams = require("../../../../shared_utils/validateParams");
 const { verifyToken } = require('../../../../shared_utils/verifyToken');
-const { getChartAnalyticsController, getOrdersTableAnalyticsController, getProductsTableAnalyticsController } = require('../../controllers/store/analytics');
+const { getChartAnalyticsController, getOrdersTableAnalyticsController, getProductsTableAnalyticsController, getTermsTableAnalyticsController } = require('../../controllers/store/analytics');
 const { sortTypesArray } = require('../../helpers/extraData');
 
 router.get(
@@ -19,7 +18,7 @@ router.get(
             type: 'string',
         }
     ]),
-    // verifyToken,
+    verifyToken,
     getChartAnalyticsController,
 );
 
@@ -77,6 +76,34 @@ router.get(
     ]),
     verifyToken,
     getProductsTableAnalyticsController,
+);
+
+router.get(
+    '/table/terms',
+    validateParams([
+        {
+            key: 'query',
+            value: 'startDate',
+            type: 'string',
+        },
+        {
+            key: 'query',
+            value: 'sortKey',
+            validate: (key) => key === 'total' || key === 'ios' || key === 'android',
+        },
+        {
+            key: 'query',
+            value: 'sortType',
+            validate: (type) => sortTypesArray.includes(type),
+        },
+        {
+            key: 'query',
+            value: 'page',
+            type: 'number',
+        },
+    ]),
+    verifyToken,
+    getTermsTableAnalyticsController,
 );
     
 module.exports = router;

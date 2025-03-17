@@ -33,9 +33,9 @@ app.use(
 
 
 require('dotenv').config();
-// require('./cron/analytics/actions');
-// require('./cron/analytics/terms');
-// require('./cron/analytics/purchases');
+require('./cron/analytics/actions');
+require('./cron/analytics/terms');
+require('./cron/analytics/purchases');
 
 app.use(express.json());
 

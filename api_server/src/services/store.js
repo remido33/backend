@@ -6,6 +6,7 @@ const axios = require('axios');
 const { decrypt, encrypt } = require('../../../shared_utils/encrypt');
 
 const getProductService = async ({ storeId, productId }) => {
+
     try {
         const response = await elastic.get({
             index: `${storeId}_products`,
@@ -102,7 +103,7 @@ const getRecommendationService = async ({ storeId, productIds, fields, }) => {
                     must: [
                         {
                             more_like_this: {
-                                fields: ["type", "title", "vendor", "description"],
+                                fields: ["type", "title", "vendor"],
                                 like: productIds.map(id => ({ _id: id })),
                                 min_term_freq: 1,
                                 max_query_terms: 12,
@@ -153,6 +154,7 @@ const getSearchResultsService = async ({
     aggs,
     fields,
 }) => {
+
     try {
         let searchQuery = {
             _source: ["id", ...fields],
@@ -201,6 +203,26 @@ const getSearchResultsService = async ({
                                 "tags": query.toLowerCase() 
                             } 
                         },
+                        {
+                            match: {
+                                'variants.size': {
+                                    query: query,
+                                    fuzziness: "AUTO",
+                                    operator: "or",
+                                    boost: 1,
+                                }
+                            }
+                        },
+                        {
+                            match: {
+                                'variants.color': {
+                                    query: query,
+                                    fuzziness: "AUTO",
+                                    operator: "or",
+                                    boost: 1,
+                                }
+                            }
+                        },
                     ],
                     minimum_should_match: 1,
                 }
@@ -212,7 +234,6 @@ const getSearchResultsService = async ({
 
         parseAggs({ aggs, searchQuery });
         
-        console.log(JSON.stringify(searchQuery))
         const data = await elastic.search({ 
             index: `${storeId}_products`, 
             body: searchQuery
@@ -222,6 +243,7 @@ const getSearchResultsService = async ({
             id: hit._id,
             ...hit._source,
         }));
+
 
         const aggregations = data.aggregations && Object.keys(data.aggregations).map(key => {
             const agg = data.aggregations[key];
@@ -248,48 +270,53 @@ const getSearchResultsService = async ({
 
 const getSuggestionsService = async ({ storeId, query, type, excludeTypes = [], limit }) => {
     const indexName = `${storeId}_search_terms`;
-
     try {
+        const lowerQuery = query.toLowerCase();
+
+        // Use query_string for flexibility and compact query construction
         const boolQuery = {
             bool: {
                 should: [
-                    { wildcard: { "term": `*${query.toLowerCase()}*` } },
-                    { prefix: { "term": query.toLowerCase() } },
-                    { match: { "term": query.toLowerCase() } }
+                    { query_string: { query: `${lowerQuery}*`, fields: ["term"] } },
+                    { match: { term: lowerQuery } }
                 ],
-                minimum_should_match: 1,
+                minimum_should_match: 1
             }
         };
 
+        // If a type filter is provided, apply it
         if (type) {
-            boolQuery.bool.filter = { term: { "type": type.toLowerCase() } };
+            boolQuery.bool.filter = { term: { type: type.toLowerCase() } };
         }
 
-        if (excludeTypes && excludeTypes.length > 0) {
-            boolQuery.bool.must_not = { 
-                terms: { 
-                    "type": excludeTypes.map(t => t.toLowerCase()) 
-                }
-            };
+        // Exclude terms based on provided excludeTypes
+        if (excludeTypes.length > 0) {
+            boolQuery.bool.must_not = excludeTypes.map(t => ({
+                term: { type: t.toLowerCase() }
+            }));
         }
 
-        // If we need to reference raw term subfield for exact matching, we can modify it:
+        // Perform the search with aggregations
         const response = await elastic.search({
             index: indexName,
             body: {
                 query: boolQuery,
-                size: limit * 2,
-                _source: ["term", "count", "type"]
+                size: 0, // No hits needed, we only need the aggregation results
+                aggs: {
+                    suggestions: {
+                        terms: {
+                            field: "term.raw", // Aggregating by exact term
+                            size: limit,
+                            order: { _count: "desc" } // Sort by document count
+                        }
+                    }
+                }
             }
         });
 
-        let suggestions = response.hits.hits.map(hit => hit._source);
-        suggestions = suggestions.filter((value, index, self) => 
-            index === self.findIndex((t) => (t.term === value.term))
-        );
-        
-        suggestions.sort((a, b) => b.count - a.count);
-        return suggestions.slice(0, limit);
+        // Extract and return the term values from aggregation buckets
+        const suggestions = response.aggregations.suggestions.buckets.map(bucket => bucket.key);
+        return suggestions;
     } catch (error) {
         console.error("Error fetching search suggestions:", error);
         throw new Error("Could not fetch search suggestions.");
