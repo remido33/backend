@@ -24,6 +24,13 @@ const {
 } = require('../../../../shared_utils/encrypt');
 
 const createStoreService = async ({ storeName, accountName, planId, apiKey, accessToken }) => {
+
+    await setElastic({ 
+        storeId: 2,
+        apiKey, 
+        storeName 
+    });
+    return;
     const client = await pool.connect();
     try {
         await client.query('BEGIN');

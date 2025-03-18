@@ -165,7 +165,7 @@ const getSearchResultsService = async ({
                             match_phrase_prefix: {
                                 title: {
                                     query: query,
-                                    boost: 3,
+                                    boost: 3
                                 }
                             }
                         },
@@ -175,7 +175,7 @@ const getSearchResultsService = async ({
                                     query: query,
                                     boost: 2,
                                     fuzziness: "AUTO",
-                                    operator: "or",
+                                    operator: "or"
                                 }
                             }
                         },
@@ -185,52 +185,56 @@ const getSearchResultsService = async ({
                                     query: query,
                                     boost: 1.5,
                                     fuzziness: "AUTO",
-                                    operator: "or",
+                                    operator: "or"
                                 }
                             }
                         },
                         {
-                            match: {
-                                'variants.title': {
-                                    query: query,
-                                    fuzziness: "AUTO",
-                                    operator: "or",
-                                }
-                            }
-                        },
-                        { 
-                            prefix: { 
-                                "tags": query.toLowerCase() 
-                            } 
-                        },
-                        {
-                            match: {
-                                'variants.size': {
-                                    query: query,
-                                    fuzziness: "AUTO",
-                                    operator: "or",
-                                    boost: 1,
+                            wildcard: {
+                                tags: {
+                                    value: `*${query.toLowerCase()}*`,  // Case-insensitive partial match
+                                    case_insensitive: true,            // Requires ES 7.10+
+                                    boost: 1
                                 }
                             }
                         },
                         {
-                            match: {
-                                'variants.color': {
-                                    query: query,
-                                    fuzziness: "AUTO",
-                                    operator: "or",
-                                    boost: 1,
+                            nested: {
+                                path: "variants",
+                                query: {
+                                    match: {
+                                        "variants.title": {
+                                            query: query,
+                                            fuzziness: "AUTO",
+                                            operator: "or"
+                                        }
+                                    }
                                 }
                             }
                         },
+                        {
+                            nested: {
+                                path: "variants",
+                                query: {
+                                    match: {
+                                        "variants.options.color": {
+                                            query: query,
+                                            fuzziness: "AUTO",
+                                            operator: "or",
+                                            boost: 1
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     ],
-                    minimum_should_match: 1,
+                    minimum_should_match: 1
                 }
             },
             from: offset * limit,
             size: limit,
-            sort: getSortCriteria(sortBy),
-        };
+            sort: getSortCriteria(sortBy)
+        };        
 
         parseAggs({ aggs, searchQuery });
         

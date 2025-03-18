@@ -303,7 +303,7 @@ const setElastic = async ({ storeId, apiKey, storeName, }) => {
                         updatedAt: { type: 'date' },
                         minPrice: { type: 'scaled_float', scaling_factor: 100 },
                         maxPrice: { type: 'scaled_float', scaling_factor: 100 },
-                        tags: { type: 'text' },
+                        tags: { type: 'keyword' },
                         status: { type: 'keyword' },
                         available: { type: 'boolean' },
                         mainImage: { type: 'keyword' },
