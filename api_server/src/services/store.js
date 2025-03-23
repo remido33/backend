@@ -192,8 +192,8 @@ const getSearchResultsService = async ({
                         {
                             wildcard: {
                                 tags: {
-                                    value: `*${query.toLowerCase()}*`,  // Case-insensitive partial match
-                                    case_insensitive: true,            // Requires ES 7.10+
+                                    value: `*${query.toLowerCase()}*`,
+                                    case_insensitive: true,
                                     boost: 1
                                 }
                             }
@@ -235,7 +235,6 @@ const getSearchResultsService = async ({
             size: limit,
             sort: getSortCriteria(sortBy)
         };        
-
         parseAggs({ aggs, searchQuery });
         
         const data = await elastic.search({ 
