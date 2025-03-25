@@ -41,14 +41,15 @@ app.use(express.json());
 
 app.use('/store', require('./routes/store'));
 app.use('/store/:id/analytics', require('./routes/store/analytics'));
+app.use('/store/:id/notifications', require('./routes/store/notifications'));
 app.use('/user', require('./routes/user'));
 
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'rakshayaroslav37@gmail.com',  // Your Gmail address
-      pass: 'zdgk ursb cjew zvjp',   // Your generated App Password
+      user: 'rakshayaroslav37@gmail.com',
+      pass: 'zdgk ursb cjew zvjp',
     },
 });
 

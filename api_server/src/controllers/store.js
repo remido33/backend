@@ -140,16 +140,6 @@ const getRecommendationController = tryCatch(async (req, res) => {
     res.status(200).json(response);
 });
 
-const createNotificationTokenController =  tryCatch(async (req, res) => {
-    const { storeId } = req.params;
-    const { token, platformId } = req.body;
-    await executeQuery(
-        'INSERT INTO notifications (store_id, platform_id, token) VALUES ($1, $2, $3)',
-        [storeId, platformId, token]
-    );
-    res.status(204).end();
-});
-
 module.exports = {
     getProductController,
     getMultipleProductsController,
@@ -158,5 +148,4 @@ module.exports = {
     getCollectionProductsController,
     getRecommendationController,
     createCheckoutController,
-    createNotificationTokenController,
 };

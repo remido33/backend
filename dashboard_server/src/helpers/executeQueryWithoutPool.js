@@ -11,6 +11,7 @@ const executeQueryWithoutPool = async ({ client, query, params = [] }) => {
         if(error.code === '23505') {
             throw getError(409, 'Source already exists.')
         }
+        console.log(error);
         throw getError(500, 'Database query failed');
     }
 };

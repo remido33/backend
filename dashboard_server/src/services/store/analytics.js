@@ -167,7 +167,7 @@ const getChartAnalyticsService = async ({ storeId, startDate, endDate }) => {
     } finally {
       client.release();
     }
-  };
+};
   
   
 const getProductsTableAnalyticsService = async ({

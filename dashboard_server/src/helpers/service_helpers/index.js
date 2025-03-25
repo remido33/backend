@@ -387,7 +387,6 @@ const fetchAllProducts = async ({ storeName, apiKey }) => {
     return products;
 };
 
-
 module.exports = {
     checkUserExistsById,
     checkStoreExistsById,
