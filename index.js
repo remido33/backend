@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 
 app.use(cors({
-    origin: ['https://remido.expo.app', 'http://localhost:8081']
+    origin: ['https://remido.expo.app'] // 'http://localhost:8081'
 }));
 
 const dashboardServer = require('./dashboard_server/src');
@@ -12,7 +12,7 @@ app.use('/dashboard', dashboardServer);
 const apiServer = require('./api_server/src');
 app.use('/api', apiServer);
 
-const host = '192.168.1.131'; // '0.0.0.0'
+const host = '0.0.0.0'; // '192.168.1.131'
 const port = process.env.PORT || 4001;
 
 app.listen(port, host, () => {
