@@ -62,7 +62,7 @@ router.delete(
 
 router.patch(
     '/:id',
-    verifyToken,
+    // verifyToken,
     updateStoreController,
 );
 
