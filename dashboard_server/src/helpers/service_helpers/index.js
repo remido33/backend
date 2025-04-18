@@ -108,9 +108,9 @@ const updateStoreCollections = async ({ id: storeId, collections }) => {
     }
   
     validateCollections(collections);
-    const client = await pool.connect();
+    // const client = await pool.connect();
     try {
-        await client.query('BEGIN');
+        // await client.query('BEGIN');
 
         const { apiKey, storeName, collections: currentCollections } = await getRedisHash(
             `store:${storeId}`, 
@@ -152,19 +152,22 @@ const updateStoreCollections = async ({ id: storeId, collections }) => {
         const updatedCollections = buildUpdatedCollections(collections);
         const jsonCollections = JSON.stringify(updatedCollections);
 
+        {/* 
         await executeQueryWithoutPool({
             client,
             query: 'UPDATE stores SET collections = $1 WHERE id = $2',
             params: [jsonCollections, storeId],
-        });
+        });    
+        */}
+        
 
         await updateRedisHash(`store:${storeId}`, [{ key: 'collections', value: jsonCollections },]);
-        await client.query('COMMIT');
+        // await client.query('COMMIT');
 
         return updatedCollections;
       
     } catch (error) {
-        await client.query('ROLLBACK');
+        // await client.query('ROLLBACK');
     
         if (error?.response?.status === 404) {
             throw getError(404, 'Collection not found.');
@@ -174,9 +177,11 @@ const updateStoreCollections = async ({ id: storeId, collections }) => {
             throw error;
         };
 
+        console.log(error)
+
         throw getError(500, 'Error updating collections.');
     } finally {
-        client.release();
+        // client.release();
     }
 };
 

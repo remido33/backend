@@ -50,7 +50,7 @@ router.post(
 
 router.get(
     '/:id',
-    // verifyToken,
+    verifyToken,
     getStoreController,
 );
 
@@ -67,7 +67,7 @@ router.patch(
 );
 
 router.get('/:id/purchase/:purchaseId',
-    // verifyToken,
+    verifyToken,
     getPurchaseByIdController,
 );
 

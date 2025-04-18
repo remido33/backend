@@ -25,12 +25,15 @@ const {
 
 const createStoreService = async ({ storeName, accountName, planId, apiKey, accessToken }) => {
 
+    {/* 
     await setElastic({ 
         storeId: 2,
         apiKey, 
         storeName 
     });
-    return;
+    return;    
+    */}
+    
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -52,16 +55,16 @@ const createStoreService = async ({ storeName, accountName, planId, apiKey, acce
             storeName: storeName,
             accountName: accountName,
             filters: '[]',
-            collections: '[]',
+            collections:  '[]',
         });
 
         await setElastic({ 
             storeId,
             apiKey, 
             storeName 
-        });
+        });    
 
-        
+
         await client.query('COMMIT');
 
         return { id: storeId, };

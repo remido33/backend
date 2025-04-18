@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 
 app.use(cors({
-    origin: 'https://remido.expo.app'
+    origin: ['https://remido.expo.app'] // 'http://localhost:8081'
 }));
 
 const dashboardServer = require('./dashboard_server/src');

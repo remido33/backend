@@ -1,10 +1,9 @@
 const router = require('express').Router();
-const { validate } = require('node-cron');
 const validateParams = require("../../../shared_utils/validateParams");
 const { 
     createActionAnalyticController, 
     createTermAnalyticController,
-    createPurchaseAnalyticController
+    createPurchaseAnalyticController,
 } = require('../controllers/analytics');
 
 

@@ -19,7 +19,6 @@ const getCollectionProductsController = tryCatch(async (req, res) => {
     if(parsedFields.length === 0) {
         throw getError(400, 'One of the fields length is invalid..')
     }
-    
 
     const response = await getCollectionProductsService({
         storeId, 
@@ -30,6 +29,7 @@ const getCollectionProductsController = tryCatch(async (req, res) => {
         aggs,
         fields: parsedFields,
     });
+
 
     res.status(200).json(response);
 });

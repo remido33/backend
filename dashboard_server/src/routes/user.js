@@ -74,7 +74,7 @@ router.patch(
 
 router.get(
     '/:id/stores',
-    // verifyToken,
+    verifyToken,
     getUserStoresController,
 );
 
